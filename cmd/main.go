@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mariownyou/go-reddit-submit-image/submit_image"
+	"github.com/mariownyou/go-reddit-uploader/reddit_uploader"
 )
 
 func main() {
@@ -23,6 +23,6 @@ func main() {
 		return
 	}
 
-	postLink, _ := submit_image.SubmitMedia(*username, *password, *clientID, *clientSecret, file, "image.jpg")
+	postLink, _ := reddit_uploader.SubmitMedia(*username, *password, *clientID, *clientSecret, file, "image.jpg")
 	fmt.Println("Post Link:", postLink)
 }

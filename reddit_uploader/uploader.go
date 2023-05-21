@@ -1,4 +1,4 @@
-package submit_image
+package reddit_uploader
 
 import (
 	"bytes"
@@ -20,7 +20,7 @@ func SubmitMedia(username, password, clientID, clientSecret string, file []byte,
 		return "", err
 	}
 
-	link, err := UploadMedia(accessToken, file, filetype)
+	link, err := Upload(accessToken, file, filetype)
 	if err != nil {
 		fmt.Println("Error submitting post:", err)
 		return "", err
@@ -35,7 +35,7 @@ func SubmitMedia(username, password, clientID, clientSecret string, file []byte,
 	return postLink, nil
 }
 
-func UploadMedia(accessToken string, file []byte, filetype string) (string, error) {
+func Upload(accessToken string, file []byte, filetype string) (string, error) {
 	filename := fmt.Sprintf("file.%s", filetype)
 
 	// Set up the form data
@@ -55,7 +55,7 @@ func UploadMedia(accessToken string, file []byte, filetype string) (string, erro
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 
 	// Set the user agent header
-	req.Header.Set("User-Agent", "go-reddit-submit-image (by /u/mariownyou)")
+	req.Header.Set("User-Agent", "go-reddit-uploader (by /u/mariownyou)")
 
 	// Set up the HTTP client
 	client := &http.Client{}
@@ -187,7 +187,7 @@ func submitPost(accessToken string) (string, error) {
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 
 	// Set the user agent header
-	req.Header.Set("User-Agent", "go-reddit-submit-image (by /u/mariownyou)")
+	req.Header.Set("User-Agent", "go-reddit-uploader (by /u/mariownyou)")
 
 	// Set up the HTTP client
 	client := &http.Client{}
@@ -233,7 +233,7 @@ func submitLink(accessToken, link string) (string, error) {
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 
 	// Set the user agent header
-	req.Header.Set("User-Agent", "go-reddit-submit-image (by /u/mariownyou)")
+	req.Header.Set("User-Agent", "go-reddit-uploader (by /u/mariownyou)")
 
 	// Set up the HTTP client
 	client := &http.Client{}
@@ -277,7 +277,7 @@ func GetAccessToken(username, password, clientID, clientSecret string) (string, 
 	req.SetBasicAuth(clientID, clientSecret)
 
 	// Set the user agent header
-	req.Header.Set("User-Agent", "go-reddit-submit-image (by /u/mariownyou)")
+	req.Header.Set("User-Agent", "go-reddit-uploader (by /u/mariownyou)")
 
 	// Set up the HTTP client
 	client := &http.Client{}

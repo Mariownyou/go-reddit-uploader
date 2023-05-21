@@ -1,3 +1,3 @@
-module github.com/mariownyou/go-reddit-submit-image
+module github.com/mariownyou/go-reddit-uploader
 
 go 1.19
