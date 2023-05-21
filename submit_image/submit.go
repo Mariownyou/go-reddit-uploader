@@ -9,19 +9,18 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"strings"
 )
 
-func SubmitMedia(username, password, clientID, clientSecret, filepath string) (string, error) {
+func SubmitMedia(username, password, clientID, clientSecret string, file []byte, filetype string) (string, error) {
 	accessToken, err := GetAccessToken(username, password, clientID, clientSecret)
 	if err != nil {
 		fmt.Println("Error getting access token:", err)
 		return "", err
 	}
 
-	link, err := UploadMedia(accessToken, filepath)
+	link, err := UploadMedia(accessToken, file, filetype)
 	if err != nil {
 		fmt.Println("Error submitting post:", err)
 		return "", err
@@ -36,10 +35,12 @@ func SubmitMedia(username, password, clientID, clientSecret, filepath string) (s
 	return postLink, nil
 }
 
-func UploadMedia(accessToken, filepath string) (string, error) {
+func UploadMedia(accessToken string, file []byte, filetype string) (string, error) {
+	filename := fmt.Sprintf("file.%s", filetype)
+
 	// Set up the form data
 	form := url.Values{}
-	form.Add("filepath", filepath)
+	form.Add("filepath", filename)
 	form.Add("mimetype", "image/jpeg")
 	form.Add("api_type", "json")
 
@@ -115,20 +116,14 @@ func UploadMedia(accessToken, filepath string) (string, error) {
 		writer.WriteField(key, value)
 	}
 
-	// Add the file to the multipart form
-	file, err := os.Open(filepath)
+	part, err := writer.CreateFormFile("file", filename)
 	if err != nil {
 		fmt.Println(err)
 		return "", err
 	}
-	defer file.Close()
 
-	part, err := writer.CreateFormFile("file", file.Name())
-	if err != nil {
-		fmt.Println(err)
-		return "", err
-	}
-	_, err = io.Copy(part, file)
+	// Write the bytes to the part
+	_, err = io.Copy(part, bytes.NewReader(file))
 	if err != nil {
 		fmt.Println("Error copying file to part:", err)
 		return "", err

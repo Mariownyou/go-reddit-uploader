@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 
 	"github.com/mariownyou/go-reddit-submit-image/submit_image"
 )
@@ -16,6 +17,12 @@ func main() {
 
 	fmt.Println(*username, *password, *clientID, *clientSecret)
 
-	postLink, _ := submit_image.SubmitMedia(*username, *password, *clientID, *clientSecret, "cmd/image.jpg")
+	file, err := os.ReadFile("cmd/image.jpg")
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		return
+	}
+
+	postLink, _ := submit_image.SubmitMedia(*username, *password, *clientID, *clientSecret, file, "image.jpg")
 	fmt.Println("Post Link:", postLink)
 }
