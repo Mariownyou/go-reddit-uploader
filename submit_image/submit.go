@@ -15,13 +15,13 @@ import (
 )
 
 func SubmitMedia(username, password, clientID, clientSecret, filepath string) (string, error) {
-	accessToken, err := getAccessToken(username, password, clientID, clientSecret)
+	accessToken, err := GetAccessToken(username, password, clientID, clientSecret)
 	if err != nil {
 		fmt.Println("Error getting access token:", err)
 		return "", err
 	}
 
-	link, err := submitMedia(accessToken, filepath)
+	link, err := UploadMedia(accessToken, filepath)
 	if err != nil {
 		fmt.Println("Error submitting post:", err)
 		return "", err
@@ -36,7 +36,7 @@ func SubmitMedia(username, password, clientID, clientSecret, filepath string) (s
 	return postLink, nil
 }
 
-func submitMedia(accessToken, filepath string) (string, error) {
+func UploadMedia(accessToken, filepath string) (string, error) {
 	// Set up the form data
 	form := url.Values{}
 	form.Add("filepath", filepath)
@@ -264,7 +264,7 @@ func submitLink(accessToken, link string) (string, error) {
 	return string(responseBody), nil
 }
 
-func getAccessToken(username, password, clientID, clientSecret string) (string, error) {
+func GetAccessToken(username, password, clientID, clientSecret string) (string, error) {
 	// Set up the form data
 	form := url.Values{}
 	form.Add("grant_type", "password")
