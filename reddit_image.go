@@ -1,4 +1,4 @@
-package reddit_image
+package submit_image
 
 import (
 	"bytes"
