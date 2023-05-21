@@ -1,4 +1,4 @@
-package submit_image
+package submit_imag
 
 import (
 	"bytes"
