@@ -54,7 +54,7 @@ func submitMedia(accessToken, filepath string) (string, error) {
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 
 	// Set the user agent header
-	req.Header.Set("User-Agent", "golang:com.example.golang:v0.1 (by /u/mariownyou)")
+	req.Header.Set("User-Agent", "go-reddit-submit-image (by /u/mariownyou)")
 
 	// Set up the HTTP client
 	client := &http.Client{}
@@ -129,6 +129,10 @@ func submitMedia(accessToken, filepath string) (string, error) {
 		return "", err
 	}
 	_, err = io.Copy(part, file)
+	if err != nil {
+		fmt.Println("Error copying file to part:", err)
+		return "", err
+	}
 
 	// Close the multipart writer
 	err = writer.Close()
@@ -168,22 +172,6 @@ func submitMedia(accessToken, filepath string) (string, error) {
 	return location, nil
 }
 
-func parseResponseBody(body io.ReadCloser) (map[string]interface{}, error) {
-	var dataMap map[string]interface{}
-	responseBody, err := ioutil.ReadAll(body)
-	if err != nil {
-		fmt.Println("Error reading response body:", err)
-		return dataMap, err
-	}
-
-	if err := json.Unmarshal(responseBody, &dataMap); err != nil {
-		fmt.Println("Error parsing JSON:", err)
-		return dataMap, err
-	}
-
-	return dataMap, nil
-}
-
 func submitPost(accessToken string) (string, error) {
 	// Set up the form data
 	form := url.Values{}
@@ -204,7 +192,7 @@ func submitPost(accessToken string) (string, error) {
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 
 	// Set the user agent header
-	req.Header.Set("User-Agent", "golang:com.example.golang:v0.1 (by /u/mariownyou)")
+	req.Header.Set("User-Agent", "go-reddit-submit-image (by /u/mariownyou)")
 
 	// Set up the HTTP client
 	client := &http.Client{}
@@ -250,7 +238,7 @@ func submitLink(accessToken, link string) (string, error) {
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 
 	// Set the user agent header
-	req.Header.Set("User-Agent", "golang:com.example.golang:v0.1 (by /u/mariownyou)")
+	req.Header.Set("User-Agent", "go-reddit-submit-image (by /u/mariownyou)")
 
 	// Set up the HTTP client
 	client := &http.Client{}
@@ -294,7 +282,7 @@ func getAccessToken(username, password, clientID, clientSecret string) (string, 
 	req.SetBasicAuth(clientID, clientSecret)
 
 	// Set the user agent header
-	req.Header.Set("User-Agent", "golang:com.example.golang:v0.1 (by /u/mariownyou)")
+	req.Header.Set("User-Agent", "go-reddit-submit-image (by /u/mariownyou)")
 
 	// Set up the HTTP client
 	client := &http.Client{}
