@@ -8,5 +8,5 @@ import (
 
 func main() {
 	postLink, _ := submit_image.SubmitMedia("", "", "", "", "image.jpg")
-	fmt.Println(postLink)
+	fmt.Println("Post Link:", postLink)
 }
