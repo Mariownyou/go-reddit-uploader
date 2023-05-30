@@ -15,14 +15,18 @@ func main() {
 	clientSecret := flag.String("client-secret", "", "Reddit client secret")
 	flag.Parse()
 
-	fmt.Println(*username, *password, *clientID, *clientSecret)
+	// fmt.Println(*username, *password, *clientID, *clientSecret)
 
-	file, err := os.ReadFile("cmd/image.jpg")
-	if err != nil {
-		fmt.Println("Error reading file:", err)
-		return
-	}
+	// file, err := os.ReadFile("cmd/image.jpg")
+	// if err != nil {
+	// 	fmt.Println("Error reading file:", err)
+	// 	return
+	// }
 
-	postLink, _ := reddit_uploader.SubmitMedia(*username, *password, *clientID, *clientSecret, file, "image.jpg")
-	fmt.Println("Post Link:", postLink)
+	// postLink, _ := reddit_uploader.SubmitMedia(*username, *password, *clientID, *clientSecret, file, "image.jpg")
+	// fmt.Println("Post Link:", postLink)
+
+	video, _ := os.ReadFile("cmd/video.mp4")
+	videoPost, _ := reddit_uploader.SubmitMedia(*username, *password, *clientID, *clientSecret, video, "video.mp4")
+	fmt.Println("Post Link:", videoPost)
 }

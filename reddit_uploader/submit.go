@@ -8,18 +8,20 @@ import (
 	"strings"
 )
 
-func SubmitMedia(username, password, clientID, clientSecret string, file []byte, filetype string) (string, error) {
+func SubmitMedia(username, password, clientID, clientSecret string, file []byte, filename string) (string, error) {
 	accessToken, err := GetAccessToken(username, password, clientID, clientSecret)
 	if err != nil {
 		fmt.Println("Error getting access token:", err)
 		return "", err
 	}
 
-	link, err := UploadMedia(accessToken, file, filetype)
+	link, err := UploadMedia(accessToken, file, filename)
 	if err != nil {
 		fmt.Println("Error submitting post:", err)
 		return "", err
 	}
+
+	fmt.Println(link)
 
 	postLink, err := submitLink(accessToken, link)
 	if err != nil {
@@ -30,14 +32,15 @@ func SubmitMedia(username, password, clientID, clientSecret string, file []byte,
 	return postLink, nil
 }
 
-func submitPost(accessToken string) (string, error) {
+func submitLink(accessToken, link string) (string, error) {
 	// Set up the form data
 	form := url.Values{}
 	form.Add("api_type", "json")
-	form.Add("kind", "self")
+	form.Add("kind", "video")
 	form.Add("sr", "test")
+	form.Add("video_poster_url", "https://reddit-uploaded-media.s3-accelerate.amazonaws.com/rte_images%2Fb8t0h53gfg1b1")
 	form.Add("title", "Test post from API")
-	form.Add("text", "This is a test post from the API")
+	form.Add("url", link)
 
 	// Set up the HTTP request
 	req, err := http.NewRequest("POST", "https://oauth.reddit.com/api/submit", strings.NewReader(form.Encode()))
@@ -76,14 +79,14 @@ func submitPost(accessToken string) (string, error) {
 	return string(responseBody), nil
 }
 
-func submitLink(accessToken, link string) (string, error) {
+func submitPost(accessToken string) (string, error) {
 	// Set up the form data
 	form := url.Values{}
 	form.Add("api_type", "json")
-	form.Add("kind", "link")
+	form.Add("kind", "self")
 	form.Add("sr", "test")
 	form.Add("title", "Test post from API")
-	form.Add("url", link)
+	form.Add("text", "This is a test post from the API")
 
 	// Set up the HTTP request
 	req, err := http.NewRequest("POST", "https://oauth.reddit.com/api/submit", strings.NewReader(form.Encode()))

@@ -13,13 +13,36 @@ import (
 	"strings"
 )
 
-func UploadMedia(accessToken string, file []byte, filetype string) (string, error) {
-	filename := fmt.Sprintf("file.%s", filetype)
+type Client struct {
+	url string
+	accessToken string
+}
+
+func NewClient(url string) *Client {
+	return &Client{url}
+}
+
+func (c *Client) UploadMedia(accessToken string, file []byte, filename string) (string, error) {
+
+func UploadMedia(accessToken string, file []byte, filename string) (string, error) {
+	filetypeSplit := strings.Split(filename, ".")
+	filetype := filetypeSplit[len(filetypeSplit)-1]
+
+	// filetypes map
+	filetypes := map[string]string{
+		"jpg":  "image/jpeg",
+		"jpeg": "image/jpeg",
+		"png":  "image/png",
+		"gif":  "image/gif",
+		"mp4":  "video/mp4",
+		"mov":  "video/quicktime",
+	}
 
 	// Set up the form data
 	form := url.Values{}
 	form.Add("filepath", filename)
-	form.Add("mimetype", "image/jpeg")
+	form.Add("mimetype", filetypes[filetype])
+	// form.Add("mimetype", "image/gif")
 	form.Add("api_type", "json")
 
 	// Set up the HTTP request
