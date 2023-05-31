@@ -21,7 +21,7 @@ func main() {
 	// postLink, _ := redditUploader.SubmitMediaAsLink(file, "image.jpg")
 	// fmt.Println("Post Link:", postLink)
 
-	video, _ := os.ReadFile("cmd/video.mp4")
-	videoPost, _ := redditUploader.SubmitMediaAsLink(video, "video.mp4")
+	video, _ := os.ReadFile("cmd/vid.mp4")
+	videoPost, _ := redditUploader.SubmitVideo(video, nil, "video.mp4")
 	fmt.Println("Post Link:", videoPost)
 }
