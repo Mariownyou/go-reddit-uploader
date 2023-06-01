@@ -26,7 +26,7 @@ func main() {
 	// fmt.Println("Post Link:", postLink)
 
 	video, _ := os.ReadFile("cmd/vid.mp4")
-	params := reddit_uploader.SubmitParams{
+	params := reddit_uploader.Submission{
 		Subreddit: "test",
 		Title:     "Test post",
 	}

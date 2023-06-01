@@ -14,7 +14,7 @@ import (
 	"github.com/google/go-querystring/query"
 )
 
-type SubmitParams struct {
+type Submission struct {
 	Subreddit string `url:"sr,omitempty"`
 	Title     string `url:"title,omitempty"`
 
@@ -252,7 +252,7 @@ func (c *RedditUplaoderClient) UploadMedia(file []byte, filename string) (string
 	return link, nil
 }
 
-func (c *RedditUplaoderClient) SubmitVideo(params SubmitParams, video []byte, preview []byte, filename string) (string, error) {
+func (c *RedditUplaoderClient) SubmitVideo(params Submission, video []byte, preview []byte, filename string) (string, error) {
 	videoLink, err := c.UploadMedia(video, filename)
 	if err != nil {
 		return "", err
@@ -268,7 +268,7 @@ func (c *RedditUplaoderClient) SubmitVideo(params SubmitParams, video []byte, pr
 	}
 
 	form := struct {
-		SubmitParams
+		Submission
 		Kind       string `url:"kind,omitempty"`
 		URL        string `url:"url,omitempty"`
 		PreviewURL string `url:"video_poster_url,omitempty"`
@@ -277,7 +277,7 @@ func (c *RedditUplaoderClient) SubmitVideo(params SubmitParams, video []byte, pr
 	return c.submit(form)
 }
 
-func (c *RedditUplaoderClient) SubmitVideoLink(params SubmitParams, video []byte, preview []byte, filename string) (string, error) {
+func (c *RedditUplaoderClient) SubmitVideoLink(params Submission, video []byte, preview []byte, filename string) (string, error) {
 	videoLink, err := c.UploadMedia(video, filename)
 	if err != nil {
 		return "", err
@@ -293,7 +293,7 @@ func (c *RedditUplaoderClient) SubmitVideoLink(params SubmitParams, video []byte
 	}
 
 	form := struct {
-		SubmitParams
+		Submission
 		Kind       string `url:"kind,omitempty"`
 		URL        string `url:"url,omitempty"`
 		PreviewURL string `url:"video_poster_url,omitempty"`
@@ -302,14 +302,14 @@ func (c *RedditUplaoderClient) SubmitVideoLink(params SubmitParams, video []byte
 	return c.submit(form)
 }
 
-func (c *RedditUplaoderClient) SubmitImage(params SubmitParams, image []byte, filename string) (string, error) {
+func (c *RedditUplaoderClient) SubmitImage(params Submission, image []byte, filename string) (string, error) {
 	link, err := c.UploadMedia(image, filename)
 	if err != nil {
 		return "", err
 	}
 
 	form := struct {
-		SubmitParams
+		Submission
 		Kind string `url:"kind,omitempty"`
 		URL  string `url:"url,omitempty"`
 	}{params, "link", link}

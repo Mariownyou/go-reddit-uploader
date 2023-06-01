@@ -25,7 +25,7 @@ func main() {
     file, _ := os.ReadFile("path/to/file.jpg")
 
     // Set up the post
-    post := reddit_uploader.SubmitParams{
+    post := reddit_uploader.Submission{
         Subreddit: "subreddit",
         Title: "title",
     }
