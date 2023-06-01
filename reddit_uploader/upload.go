@@ -5,14 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
-	"regexp"
 	"strings"
-	"time"
 
 	"github.com/google/go-querystring/query"
 )
@@ -105,7 +102,7 @@ func (c *RedditUplaoderClient) GetAccessToken() (string, error) {
 	defer resp.Body.Close()
 
 	// parse the response body
-	responseBody, err := ioutil.ReadAll(resp.Body)
+	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("Error reading response body:", err)
 		return "", err
@@ -130,7 +127,6 @@ func (c *RedditUplaoderClient) UploadMedia(file []byte, filename string) (string
 	filetypeSplit := strings.Split(filename, ".")
 	filetype := filetypeSplit[len(filetypeSplit)-1]
 
-	// filetypes map
 	filetypes := map[string]string{
 		"jpg":  "image/jpeg",
 		"jpeg": "image/jpeg",
@@ -140,30 +136,22 @@ func (c *RedditUplaoderClient) UploadMedia(file []byte, filename string) (string
 		"mov":  "video/quicktime",
 	}
 
-	// Set up the form data
 	form := url.Values{}
 	form.Add("filepath", filename)
 	form.Add("mimetype", filetypes[filetype])
-	// form.Add("mimetype", "image/gif")
 	form.Add("api_type", "json")
 
-	// Set up the HTTP request
 	req, err := http.NewRequest("POST", c.apiHost+"/api/media/asset.json", strings.NewReader(form.Encode()))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 		return "", err
 	}
 
-	// add the access token header
 	req.Header.Set("Authorization", "Bearer "+c.accessToken)
-
-	// Set the user agent header
 	req.Header.Set("User-Agent", "go-reddit-uploader (by /u/mariownyou)")
 
-	// Set up the HTTP client
 	client := &http.Client{}
 
-	// Send the request
 	resp, err := client.Do(req)
 
 	if err != nil {
@@ -173,8 +161,7 @@ func (c *RedditUplaoderClient) UploadMedia(file []byte, filename string) (string
 
 	defer resp.Body.Close()
 
-	// parse the response body
-	responseBody, err := ioutil.ReadAll(resp.Body)
+	responseBody, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		fmt.Println("Error reading response body:", err)
@@ -211,7 +198,6 @@ func (c *RedditUplaoderClient) UploadMedia(file []byte, filename string) (string
 
 	fmt.Println(string(prettyJSON))
 
-	// Create a new multipart buffer
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 
@@ -225,21 +211,18 @@ func (c *RedditUplaoderClient) UploadMedia(file []byte, filename string) (string
 		return "", err
 	}
 
-	// Write the bytes to the part
 	_, err = io.Copy(part, bytes.NewReader(file))
 	if err != nil {
 		fmt.Println("Error copying file to part:", err)
 		return "", err
 	}
 
-	// Close the multipart writer
 	err = writer.Close()
 	if err != nil {
 		fmt.Println(err)
 		return "", err
 	}
 
-	// Create a new HTTP request
 	req, err = http.NewRequest("POST", actionURL, body)
 	if err != nil {
 		fmt.Println(err)
@@ -248,28 +231,25 @@ func (c *RedditUplaoderClient) UploadMedia(file []byte, filename string) (string
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	// Send the request
-	client = &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
 		return "", err
 	}
+
 	defer res.Body.Close()
 
-	// parse SOAP response
-	responseBody, err = ioutil.ReadAll(res.Body)
-	if err != nil {
-		fmt.Println("Error reading response body:", err)
-		return "", err
+	if res.StatusCode != 200 {
+		responseBody, err = io.ReadAll(res.Body)
+		if err != nil {
+			fmt.Println("Error reading response body:", err)
+			return "", err
+		}
+		fmt.Println("Error uploading file:", res.Status, string(responseBody))
 	}
 
-	regexp := regexp.MustCompile("<Location>(.*)</Location>")
-	location := regexp.FindStringSubmatch(string(responseBody))[1]
-	location = fmt.Sprintf("%s/%s", actionURL, uploadData["key"])
-	// wait for 1 ses
-	time.Sleep(1 * time.Second)
-	return location, nil
+	link := fmt.Sprintf("%s/%s", actionURL, uploadData["key"])
+	return link, nil
 }
 
 func (c *RedditUplaoderClient) SubmitVideo(params SubmitParams, video []byte, preview []byte, filename string) (string, error) {
@@ -289,9 +269,9 @@ func (c *RedditUplaoderClient) SubmitVideo(params SubmitParams, video []byte, pr
 
 	form := struct {
 		SubmitParams
-		Kind           string `url:"kind,omitempty"`
-		URL            string `url:"url,omitempty"`
-		VideoPosterURL string `url:"video_poster_url,omitempty"`
+		Kind       string `url:"kind,omitempty"`
+		URL        string `url:"url,omitempty"`
+		PreviewURL string `url:"video_poster_url,omitempty"`
 	}{params, "video", videoLink, previewLink}
 
 	return c.submit(form)
@@ -314,9 +294,9 @@ func (c *RedditUplaoderClient) SubmitVideoLink(params SubmitParams, video []byte
 
 	form := struct {
 		SubmitParams
-		Kind           string `url:"kind,omitempty"`
-		URL            string `url:"url,omitempty"`
-		VideoPosterURL string `url:"video_poster_url,omitempty"`
+		Kind       string `url:"kind,omitempty"`
+		URL        string `url:"url,omitempty"`
+		PreviewURL string `url:"video_poster_url,omitempty"`
 	}{params, "link", videoLink, previewLink}
 
 	return c.submit(form)
@@ -366,7 +346,7 @@ func (c *RedditUplaoderClient) submit(v interface{}) (string, error) {
 
 	defer resp.Body.Close()
 
-	responseBody, err := ioutil.ReadAll(resp.Body)
+	responseBody, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		fmt.Println("Error reading response body:", err)
