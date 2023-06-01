@@ -13,7 +13,22 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/google/go-querystring/query"
 )
+
+type SubmitParams struct {
+	Subreddit string `url:"sr,omitempty"`
+	Title     string `url:"title,omitempty"`
+
+	FlairID   string `url:"flair_id,omitempty"`
+	FlairText string `url:"flair_text,omitempty"`
+
+	SendReplies *bool `url:"sendreplies,omitempty"`
+	Resubmit    bool  `url:"resubmit,omitempty"`
+	NSFW        bool  `url:"nsfw,omitempty"`
+	Spoiler     bool  `url:"spoiler,omitempty"`
+}
 
 type RedditUplaoderClient struct {
 	authHost     string
@@ -257,68 +272,91 @@ func (c *RedditUplaoderClient) UploadMedia(file []byte, filename string) (string
 	return location, nil
 }
 
-func (c *RedditUplaoderClient) SubmitMediaAsLink(file []byte, filename string) (string, error) {
-	link, err := c.UploadMedia(file, filename)
+func (c *RedditUplaoderClient) SubmitVideo(params SubmitParams, video []byte, preview []byte, filename string) (string, error) {
+	videoLink, err := c.UploadMedia(video, filename)
 	if err != nil {
-		fmt.Println("Error uploading post to reddit server:", err)
 		return "", err
 	}
 
-	fmt.Println(link)
-
-	kinds := map[string]string{
-		"jpg":  "link",
-		"jpeg": "link",
-		"png":  "link",
-		"gif":  "video",
-		"mp4":  "video",
-		"mov":  "video",
+	if preview == nil {
+		preview, _ = os.ReadFile("cmd/image.jpg")
 	}
 
-	filenameSplit := strings.Split(filename, ".")
-	kind := kinds[filenameSplit[len(filenameSplit)-1]]
-
-	postLink, err := c.SubmitLink(link, kind)
+	previewLink, err := c.UploadMedia(preview, "preview.jpg")
 	if err != nil {
-		fmt.Println("Error submitting post:", err)
 		return "", err
 	}
 
-	return postLink, nil
+	form := struct {
+		SubmitParams
+		Kind           string `url:"kind,omitempty"`
+		URL            string `url:"url,omitempty"`
+		VideoPosterURL string `url:"video_poster_url,omitempty"`
+	}{params, "video", videoLink, previewLink}
+
+	return c.submit(form)
 }
 
-func (c *RedditUplaoderClient) SubmitLink(link, kind string) (string, error) {
-	// Set up the form data
-	form := url.Values{}
-	form.Add("api_type", "json")
-	form.Add("kind", kind)
-	form.Add("sr", "test")
-	if kind == "video" {
-		file, _ := os.ReadFile("cmd/image.jpg")
-		poster, _ := c.UploadMedia(file, "image.jpg")
-		fmt.Println("poster:", poster)
-		form.Add("video_poster_url", poster)
+func (c *RedditUplaoderClient) SubmitVideoLink(params SubmitParams, video []byte, preview []byte, filename string) (string, error) {
+	videoLink, err := c.UploadMedia(video, filename)
+	if err != nil {
+		return "", err
 	}
-	form.Add("title", "Test post from API")
-	form.Add("url", link)
 
-	// Set up the HTTP request
-	req, err := http.NewRequest("POST", "https://oauth.reddit.com/api/submit", strings.NewReader(form.Encode()))
+	if preview == nil {
+		preview, _ = os.ReadFile("cmd/image.jpg")
+	}
+
+	previewLink, err := c.UploadMedia(preview, "preview.jpg")
+	if err != nil {
+		return "", err
+	}
+
+	form := struct {
+		SubmitParams
+		Kind           string `url:"kind,omitempty"`
+		URL            string `url:"url,omitempty"`
+		VideoPosterURL string `url:"video_poster_url,omitempty"`
+	}{params, "link", videoLink, previewLink}
+
+	return c.submit(form)
+}
+
+func (c *RedditUplaoderClient) SubmitImage(params SubmitParams, image []byte, filename string) (string, error) {
+	link, err := c.UploadMedia(image, filename)
+	if err != nil {
+		return "", err
+	}
+
+	form := struct {
+		SubmitParams
+		Kind string `url:"kind,omitempty"`
+		URL  string `url:"url,omitempty"`
+	}{params, "link", link}
+
+	return c.submit(form)
+}
+
+func (c *RedditUplaoderClient) submit(v interface{}) (string, error) {
+	form, err := query.Values(v)
+	if err != nil {
+		fmt.Println("Error parsing query params:", err)
+		return "", err
+	}
+	form.Set("api_type", "json")
+	fmt.Println(form.Encode())
+
+	req, err := http.NewRequest("POST", c.apiHost+"/api/submit", strings.NewReader(form.Encode()))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 		return "", err
 	}
 
-	// add the access token header
 	req.Header.Set("Authorization", "Bearer "+c.accessToken)
-
-	// Set the user agent header
 	req.Header.Set("User-Agent", "go-reddit-uploader (by /u/mariownyou)")
 
-	// Set up the HTTP client
 	client := &http.Client{}
 
-	// Send the request
 	resp, err := client.Do(req)
 
 	if err != nil {
@@ -328,7 +366,6 @@ func (c *RedditUplaoderClient) SubmitLink(link, kind string) (string, error) {
 
 	defer resp.Body.Close()
 
-	// parse the response body
 	responseBody, err := ioutil.ReadAll(resp.Body)
 
 	if err != nil {
