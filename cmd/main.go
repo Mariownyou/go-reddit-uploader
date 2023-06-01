@@ -15,7 +15,7 @@ func main() {
 	clientSecret := flag.String("client-secret", "", "Reddit client secret")
 	flag.Parse()
 
-	redditUploader := reddit_uploader.NewRedditUplaoderClient(*username, *password, *clientID, *clientSecret)
+	client := reddit_uploader.New(*username, *password, *clientID, *clientSecret)
 
 	// file, _ := os.ReadFile("cmd/image.jpg")
 	// params := reddit_uploader.SubmitParams{
@@ -30,6 +30,6 @@ func main() {
 		Subreddit: "test",
 		Title:     "Test post",
 	}
-	videoPost, _ := redditUploader.SubmitVideo(params, video, nil, "video.mp4")
+	videoPost, _ := client.SubmitVideo(params, video, nil, "video.mp4")
 	fmt.Println("Post Link:", videoPost)
 }

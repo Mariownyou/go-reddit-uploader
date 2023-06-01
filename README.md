@@ -19,7 +19,7 @@ import (
 
 func main() {
     // Create a new uploader
-    uploader := reddit_uploader.NewRedditUplaoderClient("username", "password", "client_id", "client_secret")
+    client := reddit_uploader.New("username", "password", "client_id", "client_secret")
 
     // Read the file
     file, _ := os.ReadFile("path/to/file.jpg")
@@ -30,7 +30,7 @@ func main() {
         Title: "title",
     }
 
-    response, err := uploader.SubmitImage(post, file, "image.jpg")
+    response, err := client.SubmitImage(post, file, "image.jpg")
     if err != nil {
         panic(err)
     }

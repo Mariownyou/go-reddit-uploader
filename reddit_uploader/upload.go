@@ -27,7 +27,7 @@ type Submission struct {
 	Spoiler     bool  `url:"spoiler,omitempty"`
 }
 
-type RedditUplaoderClient struct {
+type RedditUplaoder struct {
 	authHost     string
 	apiHost      string
 	username     string
@@ -37,8 +37,8 @@ type RedditUplaoderClient struct {
 	accessToken  string
 }
 
-func newRedditUplaoderClient(authHost, apiHost, username, password, clientID, clientSecret string) *RedditUplaoderClient {
-	return &RedditUplaoderClient{
+func newRedditUplaoder(authHost, apiHost, username, password, clientID, clientSecret string) *RedditUplaoder {
+	return &RedditUplaoder{
 		authHost,
 		apiHost,
 		username,
@@ -49,8 +49,8 @@ func newRedditUplaoderClient(authHost, apiHost, username, password, clientID, cl
 	}
 }
 
-func NewRedditUplaoderClient(username, password, clientID, clientSecret string) *RedditUplaoderClient {
-	c := newRedditUplaoderClient(
+func New(username, password, clientID, clientSecret string) *RedditUplaoder {
+	c := newRedditUplaoder(
 		"https://www.reddit.com",
 		"https://oauth.reddit.com",
 		username,
@@ -69,7 +69,7 @@ func NewRedditUplaoderClient(username, password, clientID, clientSecret string) 
 	return c
 }
 
-func (c *RedditUplaoderClient) GetAccessToken() (string, error) {
+func (c *RedditUplaoder) GetAccessToken() (string, error) {
 	// Set up the form data
 	form := url.Values{}
 	form.Add("grant_type", "password")
@@ -123,7 +123,7 @@ func (c *RedditUplaoderClient) GetAccessToken() (string, error) {
 	return accessToken, nil
 }
 
-func (c *RedditUplaoderClient) UploadMedia(file []byte, filename string) (string, error) {
+func (c *RedditUplaoder) UploadMedia(file []byte, filename string) (string, error) {
 	filetypeSplit := strings.Split(filename, ".")
 	filetype := filetypeSplit[len(filetypeSplit)-1]
 
@@ -252,7 +252,7 @@ func (c *RedditUplaoderClient) UploadMedia(file []byte, filename string) (string
 	return link, nil
 }
 
-func (c *RedditUplaoderClient) SubmitVideo(params Submission, video []byte, preview []byte, filename string) (string, error) {
+func (c *RedditUplaoder) SubmitVideo(params Submission, video []byte, preview []byte, filename string) (string, error) {
 	videoLink, err := c.UploadMedia(video, filename)
 	if err != nil {
 		return "", err
@@ -277,7 +277,7 @@ func (c *RedditUplaoderClient) SubmitVideo(params Submission, video []byte, prev
 	return c.submit(form)
 }
 
-func (c *RedditUplaoderClient) SubmitVideoLink(params Submission, video []byte, preview []byte, filename string) (string, error) {
+func (c *RedditUplaoder) SubmitVideoLink(params Submission, video []byte, preview []byte, filename string) (string, error) {
 	videoLink, err := c.UploadMedia(video, filename)
 	if err != nil {
 		return "", err
@@ -302,7 +302,7 @@ func (c *RedditUplaoderClient) SubmitVideoLink(params Submission, video []byte, 
 	return c.submit(form)
 }
 
-func (c *RedditUplaoderClient) SubmitImage(params Submission, image []byte, filename string) (string, error) {
+func (c *RedditUplaoder) SubmitImage(params Submission, image []byte, filename string) (string, error) {
 	link, err := c.UploadMedia(image, filename)
 	if err != nil {
 		return "", err
@@ -317,7 +317,7 @@ func (c *RedditUplaoderClient) SubmitImage(params Submission, image []byte, file
 	return c.submit(form)
 }
 
-func (c *RedditUplaoderClient) submit(v interface{}) (string, error) {
+func (c *RedditUplaoder) submit(v interface{}) (string, error) {
 	form, err := query.Values(v)
 	if err != nil {
 		fmt.Println("Error parsing query params:", err)
