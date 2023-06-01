@@ -70,29 +70,22 @@ func New(username, password, clientID, clientSecret string) *RedditUplaoder {
 }
 
 func (c *RedditUplaoder) GetAccessToken() (string, error) {
-	// Set up the form data
 	form := url.Values{}
 	form.Add("grant_type", "password")
 	form.Add("username", c.username)
 	form.Add("password", c.password)
 
-	// Set up the HTTP request
 	req, err := http.NewRequest("POST", c.authHost+"/api/v1/access_token", strings.NewReader(form.Encode()))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 		return "", err
 	}
 
-	// add basic auth
 	req.SetBasicAuth(c.clientID, c.clientSecret)
-
-	// Set the user agent header
 	req.Header.Set("User-Agent", "go-reddit-uploader (by /u/mariownyou)")
 
-	// Set up the HTTP client
 	client := &http.Client{}
 
-	// Send the request
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("Error sending request:", err)
@@ -101,7 +94,6 @@ func (c *RedditUplaoder) GetAccessToken() (string, error) {
 
 	defer resp.Body.Close()
 
-	// parse the response body
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("Error reading response body:", err)

@@ -17,19 +17,19 @@ func main() {
 
 	client := reddit_uploader.New(*username, *password, *clientID, *clientSecret)
 
-	// file, _ := os.ReadFile("cmd/image.jpg")
-	// params := reddit_uploader.SubmitParams{
-	// 	Subreddit: "test",
-	// 	Title:     "Test post from API",
-	// }
-	// postLink, _ := redditUploader.SubmitImage(params, file, "image.jpg")
-	// fmt.Println("Post Link:", postLink)
-
-	video, _ := os.ReadFile("cmd/vid.mp4")
-	params := reddit_uploader.Submission{
+	file, _ := os.ReadFile("cmd/image.png")
+	post := reddit_uploader.Submission{
 		Subreddit: "test",
-		Title:     "Test post",
+		Title:     "Test post from API",
 	}
-	videoPost, _ := client.SubmitVideo(params, video, nil, "video.mp4")
-	fmt.Println("Post Link:", videoPost)
+	postLink, _ := client.SubmitImage(post, file, "image.png")
+	fmt.Println("Post Link:", postLink)
+
+	// video, _ := os.ReadFile("cmd/vid.mp4")
+	// params := reddit_uploader.Submission{
+	// 	Subreddit: "test",
+	// 	Title:     "Test post",
+	// }
+	// videoPost, _ := client.SubmitVideo(params, video, nil, "video.mp4")
+	// fmt.Println("Post Link:", videoPost)
 }
