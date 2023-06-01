@@ -251,7 +251,7 @@ func (c *RedditUplaoder) SubmitVideo(params Submission, video []byte, preview []
 	}
 
 	if preview == nil {
-		preview, _ = os.ReadFile("cmd/image.jpg")
+		preview, _ = os.ReadFile("cmd/image.png")
 	}
 
 	previewLink, err := c.UploadMedia(preview, "preview.jpg")
@@ -276,7 +276,7 @@ func (c *RedditUplaoder) SubmitVideoLink(params Submission, video []byte, previe
 	}
 
 	if preview == nil {
-		preview, _ = os.ReadFile("cmd/image.jpg")
+		preview, _ = os.ReadFile("cmd/image.png")
 	}
 
 	previewLink, err := c.UploadMedia(preview, "preview.jpg")
