@@ -52,8 +52,9 @@ post := reddit_uploader.Submission{
     Title: "title",
 }
 
+response, _ := client.SubmitVideo(post, video, nil, "video.mp4") // if preview is nil, default preview will be used
 response, _ := client.SubmitVideo(post, video, preview, "video.mp4")
-response, _ := client.SubmitVideoLink(post, video, preview, "video.mp4")  // Some communities dooesn't allow video uploads, so you can use this method to upload a video link instead, reddit will rednder this link as a regular video
+response, _ := client.SubmitVideoLink(post, video, preview, "video.mp4") // Some communities dooesn't allow video uploads, so you can use this method to upload a video link instead, reddit will rednder this link as a regular video
 
 ```
 
