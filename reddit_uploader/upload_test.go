@@ -1,37 +1,46 @@
 package reddit_uploader
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
-type Test struct {
-	name          string
-	server        *httptest.Server
-	response      string
-	expectedError error
-}
+func TestGetAccessToken(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"access_token": "123"}`))
+	}))
 
-func TestUploadMedia(t *testing.T) {
-	tests := []Test{
-		{
-			name: "TestUploadMedia",
-			server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Write([]byte(`{"args":{"action": "post", "fields": [{"name": "key", "value": "value"}]}}`))
-			})),
-			response:      "Hello, client",
-			expectedError: nil,
-		},
+	defer s.Close()
+
+	client := newRedditUplaoder(s.URL, s.URL, "username", "password", "clientID", "clientSecret")
+	token, err := client.GetAccessToken()
+
+	if err != nil {
+		t.Error("error is not nil", err)
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			defer test.server.Close()
+	if token != "123" {
+		t.Error("token is not correct", token)
+	}
 
-			resp, err := UploadMedia(test.server.URL, []byte("Hello, server"), "test.txt")
-			fmt.Println("response", resp, err)
-		})
+	// test bad request
+	s = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"error": "invalid_grant"}`))
+	}))
+
+	defer s.Close()
+
+	client = newRedditUplaoder(s.URL, s.URL, "username", "password", "clientID", "clientSecret")
+	token, err = client.GetAccessToken()
+
+	if err.Error() != "invalid_grant" {
+		t.Error("error is not correct", err)
+	}
+
+	if token != "" {
+		t.Error("token is not empty", token)
 	}
 }

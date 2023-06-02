@@ -106,6 +106,11 @@ func (c *RedditUplaoder) GetAccessToken() (string, error) {
 		return "", err
 	}
 
+	if e, ok := dataMap["error"].(string); ok {
+		fmt.Println("Error getting access token:", e)
+		return "", fmt.Errorf(e)
+	}
+
 	accessToken, ok := dataMap["access_token"].(string)
 	if !ok {
 		fmt.Println("Error getting access token")
