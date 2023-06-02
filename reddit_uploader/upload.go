@@ -77,7 +77,6 @@ func (c *RedditUplaoder) GetAccessToken() (string, error) {
 
 	req, err := http.NewRequest("POST", c.authHost+"/api/v1/access_token", strings.NewReader(form.Encode()))
 	if err != nil {
-		fmt.Println("Error creating request:", err)
 		return "", err
 	}
 
@@ -88,7 +87,6 @@ func (c *RedditUplaoder) GetAccessToken() (string, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("Error sending request:", err)
 		return "", err
 	}
 
@@ -96,25 +94,21 @@ func (c *RedditUplaoder) GetAccessToken() (string, error) {
 
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("Error reading response body:", err)
 		return "", err
 	}
 
 	var dataMap map[string]interface{}
 	if err := json.Unmarshal(responseBody, &dataMap); err != nil {
-		fmt.Println("Error parsing JSON:", err)
 		return "", err
 	}
 
 	if e, ok := dataMap["error"].(string); ok {
-		fmt.Println("Error getting access token:", e)
 		return "", fmt.Errorf(e)
 	}
 
 	accessToken, ok := dataMap["access_token"].(string)
 	if !ok {
-		fmt.Println("Error getting access token")
-		return "", err
+		return "", fmt.Errorf("error getting access token")
 	}
 
 	return accessToken, nil
@@ -140,7 +134,6 @@ func (c *RedditUplaoder) UploadMedia(file []byte, filename string) (string, erro
 
 	req, err := http.NewRequest("POST", c.apiHost+"/api/media/asset.json", strings.NewReader(form.Encode()))
 	if err != nil {
-		fmt.Println("Error creating request:", err)
 		return "", err
 	}
 
@@ -152,7 +145,6 @@ func (c *RedditUplaoder) UploadMedia(file []byte, filename string) (string, erro
 	resp, err := client.Do(req)
 
 	if err != nil {
-		fmt.Println("Error sending request:", err)
 		return "", err
 	}
 
@@ -161,18 +153,15 @@ func (c *RedditUplaoder) UploadMedia(file []byte, filename string) (string, erro
 	responseBody, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		fmt.Println("Error reading response body:", err)
 		return "", err
 	}
 
 	var dataMap map[string]interface{}
 	if err != nil {
-		fmt.Println("Error reading response body:", err)
 		return "", err
 	}
 
 	if err := json.Unmarshal(responseBody, &dataMap); err != nil {
-		fmt.Println("Error parsing JSON:", err)
 		return "", err
 	}
 
@@ -189,7 +178,6 @@ func (c *RedditUplaoder) UploadMedia(file []byte, filename string) (string, erro
 	// pretty print the JSON response
 	prettyJSON, err := json.MarshalIndent(uploadData, "", "    ")
 	if err != nil {
-		fmt.Println("Error marshalling JSON:", err)
 		return "", err
 	}
 
@@ -204,13 +192,11 @@ func (c *RedditUplaoder) UploadMedia(file []byte, filename string) (string, erro
 
 	part, err := writer.CreateFormFile("file", filename)
 	if err != nil {
-		fmt.Println(err)
 		return "", err
 	}
 
 	_, err = io.Copy(part, bytes.NewReader(file))
 	if err != nil {
-		fmt.Println("Error copying file to part:", err)
 		return "", err
 	}
 
@@ -239,7 +225,6 @@ func (c *RedditUplaoder) UploadMedia(file []byte, filename string) (string, erro
 	if res.StatusCode != 200 {
 		responseBody, err = io.ReadAll(res.Body)
 		if err != nil {
-			fmt.Println("Error reading response body:", err)
 			return "", err
 		}
 		fmt.Println("Error uploading file:", res.Status, string(responseBody))
