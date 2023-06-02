@@ -38,3 +38,25 @@ func main() {
     fmt.Println(response)
 }
 ```
+
+
+## Uplaoding Videos
+
+```golang
+
+video, _ := os.ReadFile("path/to/video.mp4")
+preview, _ := os.ReadFile("path/to/preview.jpg")
+
+post := reddit_uploader.Submission{
+    Subreddit: "subreddit",
+    Title: "title",
+}
+
+response, _ := client.SubmitVideo(post, video, preview, "video.mp4")
+response, _ := client.SubmitVideoLink(post, video, preview, "video.mp4")  // Some communities dooesn't allow video uploads, so you can use this method to upload a video link instead, reddit will rednder this link as a regular video
+
+```
+
+
+## License
+[License](LICENSE)
