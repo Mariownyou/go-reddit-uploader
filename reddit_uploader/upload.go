@@ -49,7 +49,7 @@ func newRedditUplaoder(authHost, apiHost, username, password, clientID, clientSe
 	}
 }
 
-func New(username, password, clientID, clientSecret string) *RedditUplaoder {
+func New(username, password, clientID, clientSecret string) (*RedditUplaoder, error) {
 	c := newRedditUplaoder(
 		"https://www.reddit.com",
 		"https://oauth.reddit.com",
@@ -61,12 +61,12 @@ func New(username, password, clientID, clientSecret string) *RedditUplaoder {
 
 	accessToken, err := c.GetAccessToken()
 	if err != nil {
-		panic(err) // TODO: handle error
+		return nil, err
 	}
 
 	c.accessToken = accessToken
 
-	return c
+	return c, nil
 }
 
 func (c *RedditUplaoder) GetAccessToken() (string, error) {

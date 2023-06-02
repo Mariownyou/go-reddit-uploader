@@ -15,7 +15,7 @@ func main() {
 	clientSecret := flag.String("client-secret", "", "Reddit client secret")
 	flag.Parse()
 
-	client := reddit_uploader.New(*username, *password, *clientID, *clientSecret)
+	client, _ := reddit_uploader.New(*username, *password, *clientID, *clientSecret)
 
 	file, _ := os.ReadFile("cmd/image.png")
 	post := reddit_uploader.Submission{

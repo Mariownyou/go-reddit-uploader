@@ -19,7 +19,7 @@ import (
 
 func main() {
     // Create a new uploader
-    client := reddit_uploader.New("username", "password", "client_id", "client_secret")
+    client, _ := reddit_uploader.New("username", "password", "client_id", "client_secret")
 
     // Read the file
     file, _ := os.ReadFile("path/to/file.jpg")
