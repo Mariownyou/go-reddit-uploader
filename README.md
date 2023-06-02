@@ -1,5 +1,7 @@
 # go-reddit-uploader: Upload media files to Reddit using the platform's native API. Supports images, videos, or GIFs
 
+This package provides only the basic functionality to upload media files to Reddit because at the moment there are no other packages that support native media uploads. If you look for more advanced features, you can use an excellent wrapper [go-reddit](https://github.com/vartanbeno/go-reddit) by vartanbeno.
+
 
 ## Installation
 
