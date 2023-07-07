@@ -259,34 +259,13 @@ func (c *RedditUplaoder) SubmitVideo(params Submission, video []byte, preview []
 	return c.submit(form)
 }
 
-func (c *RedditUplaoder) SubmitVideoLink(params Submission, video []byte, preview interface{}, filename string) (string, error) {
-	videoLink, err := c.UploadMedia(video, filename)
-	if err != nil {
-		return "", err
-	}
-
-	if preview == nil {
-		preview, _ = os.ReadFile("cmd/image.png")
-	}
-
-	var previewLink string
-
-	switch p := preview.(type) {
-	case []byte:
-		previewLink, err = c.UploadMedia(p, "preview.jpg")
-		if err != nil {
-			return "", err
-		}
-	case string:
-		previewLink = preview.(string)
-	}
-
+func (c *RedditUplaoder) SubmitVideoLink(params Submission, video, preview, filename string) (string, error) {
 	form := struct {
 		Submission
 		Kind       string `url:"kind,omitempty"`
 		URL        string `url:"url,omitempty"`
 		PreviewURL string `url:"video_poster_url,omitempty"`
-	}{params, "link", videoLink, previewLink}
+	}{params, "link", video, preview}
 
 	return c.submit(form)
 }
