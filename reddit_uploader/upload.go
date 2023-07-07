@@ -222,7 +222,7 @@ func (c *RedditUplaoder) UploadMedia(file []byte, filename string) (string, erro
 
 	defer res.Body.Close()
 
-	if res.StatusCode != 200 {
+	if res.StatusCode != 200 && res.StatusCode != 201 {
 		responseBody, err = io.ReadAll(res.Body)
 		if err != nil {
 			return "", err
@@ -259,7 +259,7 @@ func (c *RedditUplaoder) SubmitVideo(params Submission, video []byte, preview []
 	return c.submit(form)
 }
 
-func (c *RedditUplaoder) SubmitVideoLink(params Submission, video []byte, preview []byte, filename string) (string, error) {
+func (c *RedditUplaoder) SubmitVideoLink(params Submission, video []byte, preview interface{}, filename string) (string, error) {
 	videoLink, err := c.UploadMedia(video, filename)
 	if err != nil {
 		return "", err
@@ -269,9 +269,16 @@ func (c *RedditUplaoder) SubmitVideoLink(params Submission, video []byte, previe
 		preview, _ = os.ReadFile("cmd/image.png")
 	}
 
-	previewLink, err := c.UploadMedia(preview, "preview.jpg")
-	if err != nil {
-		return "", err
+	var previewLink string
+
+	switch p := preview.(type) {
+	case []byte:
+		previewLink, err = c.UploadMedia(p, "preview.jpg")
+		if err != nil {
+			return "", err
+		}
+	case string:
+		previewLink = preview.(string)
 	}
 
 	form := struct {
