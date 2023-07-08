@@ -36,9 +36,12 @@ type Submission struct {
 }
 
 type Response struct {
-	JSON struct {
+	Message string `json:"message"`
+	Error   int    `json:"error"`
+	JSON    struct {
 		Errors [][]string `json:"errors"`
 		Data   struct {
+			URL               string `json:"url"`
 			UserSubmittedPage string `json:"user_submitted_page"`
 			WebsocketURL      string `json:"websocket_url"`
 		} `json:"data"`
@@ -359,6 +362,10 @@ func parseResponse(body []byte) (string, error) {
 		default:
 			return "", errors.New(response.JSON.Errors[0][1])
 		}
+	}
+
+	if response.Message != "" {
+		return "", fmt.Errorf("%s : %d", response.Message, response.Error)
 	}
 
 	jsonString, err := json.Marshal(response.JSON.Data)
