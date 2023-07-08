@@ -267,14 +267,7 @@ func (c *RedditUplaoder) SubmitVideo(params Submission, video []byte, preview []
 		return "", err
 	}
 
-	form := struct {
-		Submission
-		Kind       string `url:"kind,omitempty"`
-		URL        string `url:"url,omitempty"`
-		PreviewURL string `url:"video_poster_url,omitempty"`
-	}{params, "video", videoLink, previewLink}
-
-	return c.submit(form)
+	return c.SubmitVideoLink(params, videoLink, previewLink, filename)
 }
 
 func (c *RedditUplaoder) SubmitVideoLink(params Submission, video, preview, filename string) (string, error) {
@@ -294,11 +287,15 @@ func (c *RedditUplaoder) SubmitImage(params Submission, image []byte, filename s
 		return "", err
 	}
 
+	return c.SubmitImageLink(params, link, filename)
+}
+
+func (c *RedditUplaoder) SubmitImageLink(params Submission, image, filename string) (string, error) {
 	form := struct {
 		Submission
 		Kind string `url:"kind,omitempty"`
 		URL  string `url:"url,omitempty"`
-	}{params, "link", link}
+	}{params, "link", image}
 
 	return c.submit(form)
 }
