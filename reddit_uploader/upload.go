@@ -3,6 +3,7 @@ package reddit_uploader
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -12,6 +13,13 @@ import (
 	"strings"
 
 	"github.com/google/go-querystring/query"
+)
+
+var (
+	ErrImagesNotAllowed      = errors.New("community does not allow images")
+	ErrSubredditDoesNotExist = errors.New("community does not exist")
+	ErrSubredditNotAllowed   = errors.New("this community only allows trusted members to post here")
+	ErrMissingVideoURLs      = errors.New("this community requires a video link and a post link")
 )
 
 type Submission struct {
@@ -25,6 +33,16 @@ type Submission struct {
 	Resubmit    bool  `url:"resubmit,omitempty"`
 	NSFW        bool  `url:"nsfw,omitempty"`
 	Spoiler     bool  `url:"spoiler,omitempty"`
+}
+
+type Response struct {
+	JSON struct {
+		Errors [][]string `json:"errors"`
+		Data   struct {
+			UserSubmittedPage string `json:"user_submitted_page"`
+			WebsocketURL      string `json:"websocket_url"`
+		} `json:"data"`
+	} `json:"json"`
 }
 
 type RedditUplaoder struct {
@@ -321,5 +339,35 @@ func (c *RedditUplaoder) submit(v interface{}) (string, error) {
 		return "", err
 	}
 
-	return string(responseBody), nil
+	return parseResponse(responseBody)
+}
+
+func parseResponse(body []byte) (string, error) {
+	var response Response
+
+	if err := json.Unmarshal(body, &response); err != nil {
+		return "", err
+	}
+
+	if len(response.JSON.Errors) > 0 {
+		switch response.JSON.Errors[0][0] {
+		case "IMAGES_NOTALLOWED":
+			return "", ErrImagesNotAllowed
+		case "SUBREDDIT_NOEXIST":
+			return "", ErrSubredditDoesNotExist
+		case "SUBREDDIT_NOTALLOWED":
+			return "", ErrSubredditNotAllowed
+		case "MISSING_VIDEO_URLS":
+			return "", ErrMissingVideoURLs
+		default:
+			return "", errors.New(response.JSON.Errors[0][1])
+		}
+	}
+
+	jsonString, err := json.Marshal(response.JSON.Data)
+	if err != nil {
+		return "", err
+	}
+
+	return string(jsonString), nil
 }
