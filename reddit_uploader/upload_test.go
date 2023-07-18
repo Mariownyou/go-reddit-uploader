@@ -14,7 +14,7 @@ func TestGetAccessToken(t *testing.T) {
 
 	defer s.Close()
 
-	client := newRedditUplaoder(s.URL, s.URL, "username", "password", "clientID", "clientSecret")
+	client := newRedditUploader(s.URL, s.URL, "username", "password", "clientID", "clientSecret")
 	token, err := client.GetAccessToken()
 
 	if err != nil {
@@ -33,7 +33,7 @@ func TestGetAccessToken(t *testing.T) {
 
 	defer s.Close()
 
-	client = newRedditUplaoder(s.URL, s.URL, "username", "password", "clientID", "clientSecret")
+	client = newRedditUploader(s.URL, s.URL, "username", "password", "clientID", "clientSecret")
 	token, err = client.GetAccessToken()
 
 	if err.Error() != "invalid_grant" {
