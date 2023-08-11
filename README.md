@@ -16,7 +16,7 @@ package main
 
 import (
     "fmt"
-    "github.com/mariownyou/go-reddit-uploader"
+    "github.com/mariownyou/go-reddit-uploader/reddit_uploader"
 )
 
 func main() {
