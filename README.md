@@ -6,7 +6,7 @@ This package provides only the basic functionality to upload media files to Redd
 ## Installation
 
 ```bash
-go get -u github.com/mariownyou/go-reddit-uploader
+go get -u github.com/mariownyou/go-reddit-uploader/reddit_uploader
 ```
 
 ## Usage
@@ -21,10 +21,7 @@ import (
 
 func main() {
     // Create a new uploader
-    client, _ := reddit_uploader.New("username", "password", "client_id", "client_secret")
-
-    // Read the file
-    file, _ := os.ReadFile("path/to/file.jpg")
+    client, _ := reddit_uploader.New("username", "password", "client_id", "client_secret", "user_agent")
 
     // Set up the post
     post := reddit_uploader.Submission{
@@ -32,12 +29,10 @@ func main() {
         Title: "title",
     }
 
-    response, err := client.SubmitImage(post, file, "image.jpg")
+    err := client.SubmitImage(post, "image.jpg")
     if err != nil {
         panic(err)
     }
-
-    fmt.Println(response)
 }
 ```
 
@@ -46,17 +41,10 @@ func main() {
 
 ```golang
 
-video, _ := os.ReadFile("path/to/video.mp4")
-preview, _ := os.ReadFile("path/to/preview.jpg")
-
-post := reddit_uploader.Submission{
-    Subreddit: "subreddit",
-    Title: "title",
+err := client.SubmitVideo(post, "video.mp4", "preview.jpg")
+if err != nil {
+    panic(err)
 }
-
-response, _ := client.SubmitVideo(post, video, nil, "video.mp4") // if preview is nil, default preview will be used
-response, _ := client.SubmitVideo(post, video, preview, "video.mp4")
-response, _ := client.SubmitVideoLink(post, video, preview, "video.mp4") // Some communities dooesn't allow video uploads, so you can use this method to upload a video link instead, reddit will rednder this link as a regular video
 
 ```
 
