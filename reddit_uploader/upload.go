@@ -43,7 +43,10 @@ func (u *Uploader) GetAccessToken() (string, error) {
 	form.Add("username", u.username)
 	form.Add("password", u.password)
 
-	resp := u.Post("https://www.reddit.com/api/v1/access_token", strings.NewReader(form.Encode()), true)
+	resp, err := u.Post("https://www.reddit.com/api/v1/access_token", strings.NewReader(form.Encode()), true)
+	if err != nil {
+		return "", err
+	}
 	defer resp.Body.Close()
 
 	type TokenResponse struct {
@@ -52,20 +55,33 @@ func (u *Uploader) GetAccessToken() (string, error) {
 	}
 
 	var content TokenResponse
-	err := json.NewDecoder(resp.Body).Decode(&content)
+	err = json.NewDecoder(resp.Body).Decode(&content)
 	if err != nil {
-		return "", fmt.Errorf("ERROR: Could not unmarshal response: %s\n", err)
+		return "", err
 	}
 
 	if content.Error != 0 {
-		return "", fmt.Errorf("ERROR: Could not get access token: %d\n", content.Error)
+		return "", fmt.Errorf("Could not get access token: %d\n", content.Error)
 	}
 
 	return content.Token, nil
 }
 
+func (u *Uploader) RefreshAccessToken() error {
+	t, err := u.GetAccessToken()
+	if err != nil {
+		return err
+	}
+
+	u.token = t
+	return nil
+}
+
 func (u *Uploader) SubmitImage(params Submission, imagePath string) error {
-	imageURL, _ := u.UploadMedia(imagePath)
+	imageURL, _, err := u.UploadMedia(imagePath)
+	if err != nil {
+		return err
+	}
 
 	post := struct {
 		Submission
@@ -77,8 +93,11 @@ func (u *Uploader) SubmitImage(params Submission, imagePath string) error {
 }
 
 func (u *Uploader) SubmitVideo(params Submission, videoPath, previewPath string) error {
-	videoURL, _ := u.UploadMedia(videoPath)
-	previewURL, _ := u.UploadMedia(previewPath)
+	videoURL, _, err := u.UploadMedia(videoPath)
+	previewURL, _, err := u.UploadMedia(previewPath)
+	if err != nil {
+		return err
+	}
 
 	post := struct {
 		Submission
@@ -90,7 +109,17 @@ func (u *Uploader) SubmitVideo(params Submission, videoPath, previewPath string)
 	return u.SubmitMedia(post)
 }
 
-func (u *Uploader) Post(url string, data io.Reader, auth ...bool) *http.Response {
+func (u *Uploader) SubmitLink(params Submission, link string) error {
+	post := struct {
+		Submission
+		Kind       string `url:"kind,omitempty"`
+		URL        string `url:"url,omitempty"`
+	}{params, "link", link}
+
+	return u.SubmitMedia(post)
+}
+
+func (u *Uploader) Post(url string, data io.Reader, auth ...bool) (*http.Response, error) {
 	req, err := http.NewRequest("POST", url, data)
 	if err != nil {
 		panic(fmt.Errorf("ERROR: Could not create a request object: %s\n", err))
@@ -106,13 +135,16 @@ func (u *Uploader) Post(url string, data io.Reader, auth ...bool) *http.Response
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
+		if strings.Contains(err.Error(), "timeout") {
+			return nil, err
+		}
 		panic(fmt.Errorf("ERROR: could not perform a request: %s\n", err))
 	}
 
-	return resp
+	return resp, nil
 }
 
-func (u *Uploader) UploadMedia(mediaPath string) (string, string) {
+func (u *Uploader) UploadMedia(mediaPath string) (string, string, error) {
 	split := strings.Split(mediaPath, ".")
 	if len(split) < 2 {
 		panic(fmt.Errorf("ERROR: Filepath does not contain any extension\n"))
@@ -128,17 +160,29 @@ func (u *Uploader) UploadMedia(mediaPath string) (string, string) {
 	form.Add("filepath", mediaPath)
 	form.Add("mimetype", mimetype)
 
-	resp := u.Post("https://oauth.reddit.com/api/media/asset.json", strings.NewReader(form.Encode()))
+	resp, err := u.Post("https://oauth.reddit.com/api/media/asset.json", strings.NewReader(form.Encode()))
+	if err != nil {
+		return "", "", err
+	}
 
 	defer resp.Body.Close()
 
+	data, err := io.ReadAll(resp.Body) // @TODO move to main package and maybe we could use nopcloser and not read all initially
+	if err != nil {
+		panic(fmt.Errorf("ERROR: Could not ReadAll resp Body: %s\n", err))
+	}
+
 	var content UploadMediaResponse
-	err := json.NewDecoder(resp.Body).Decode(&content)
+	err = json.NewDecoder(bytes.NewReader(data)).Decode(&content)
 	if err != nil {
 		panic(fmt.Errorf("ERROR: Could not unmarshal response: %s\n", err))
 	}
 
 	uploadLease := content.Args
+	if uploadLease.Action == "" {
+		return "", "", fmt.Errorf("Could not get action url: %s", data)
+	}
+
 	uploadURL := "https:" + uploadLease.Action
 	uploadData := map[string]string{}
 
@@ -146,16 +190,20 @@ func (u *Uploader) UploadMedia(mediaPath string) (string, string) {
 		uploadData[arg.Name] = arg.Value
 	}
 
-	resp = ReadAndPostMedia(mediaPath, uploadURL, uploadData)
+	resp, err = ReadAndPostMedia(mediaPath, uploadURL, uploadData)
+	if err != nil {
+		return "", "", err
+	}
+
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 201 {
 		content, _ := io.ReadAll(resp.Body)
-		panic(fmt.Errorf("ERROR: Could not post meida: %s", string(content)))
+		return "", "", fmt.Errorf("Could not post media: %s\ndata: %s\n", string(content), uploadLease)
 	}
 
 	mediaURL := fmt.Sprintf("%s/%s", uploadURL, uploadData["key"])
-	return mediaURL, content.Asset.WebsocketURL
+	return mediaURL, content.Asset.WebsocketURL, nil
 }
 
 func (u *Uploader) SubmitMedia(post interface{}) error {
@@ -166,7 +214,10 @@ func (u *Uploader) SubmitMedia(post interface{}) error {
 
 	form.Add("api_type", "json")
 
-	resp := u.Post("https://oauth.reddit.com/api/submit", strings.NewReader(form.Encode()))
+	resp, err := u.Post("https://oauth.reddit.com/api/submit", strings.NewReader(form.Encode()))
+	if err != nil {
+		return err
+	}
 	defer resp.Body.Close()
 
 	return ParseErrors(resp)
@@ -185,7 +236,7 @@ type UploadMediaResponse struct {
 	} `json:"asset"`
 }
 
-func PostFiles(url string, data map[string]string, files ...FilePart) *http.Response {
+func PostFiles(url string, data map[string]string, files ...FilePart) (*http.Response, error) {
 	b := new(bytes.Buffer)
 	w := multipart.NewWriter(b)
 
@@ -196,23 +247,23 @@ func PostFiles(url string, data map[string]string, files ...FilePart) *http.Resp
 	for _, fp := range files {
 		part, err := w.CreateFormFile("file", fp.name)
 		if err != nil {
-			panic(fmt.Errorf("ERROR: Could not create form file: %s\n", err))
+			return nil, fmt.Errorf("Could not create form file: %s\n", err)
 		}
 
 		_, err = io.Copy(part, bytes.NewReader(fp.file))
 		if err != nil {
-			panic(fmt.Errorf("ERROR: Could not write file to form: %s\n", err))
+			return nil, fmt.Errorf("Could not write file to form: %s\n", err)
 		}
 	}
 
 	err := w.Close()
 	if err != nil {
-		panic(fmt.Errorf("ERROR: Could not close multipart form: %s\n", err))
+		return nil, fmt.Errorf("Could not close multipart form: %s\n", err)
 	}
 
 	req, err := http.NewRequest("POST", url, b)
 	if err != nil {
-		panic(fmt.Errorf("ERROR: Could not create a request object: %s\n", err))
+		return nil, fmt.Errorf("Could not create a request object: %s\n", err)
 	}
 
 	req.Header.Set("Content-Type", w.FormDataContentType())
@@ -220,10 +271,10 @@ func PostFiles(url string, data map[string]string, files ...FilePart) *http.Resp
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(fmt.Errorf("ERROR: could not perform a request: %s\n", err))
+		return nil, fmt.Errorf("Could not perform a request: %s\n", err)
 	}
 
-	return resp
+	return resp, nil
 }
 
 type FilePart struct {
@@ -231,7 +282,7 @@ type FilePart struct {
 	name string
 }
 
-func ReadAndPostMedia(mediaPath, uploadURL string, data map[string]string) *http.Response {
+func ReadAndPostMedia(mediaPath, uploadURL string, data map[string]string) (*http.Response, error) {
 	file, err := os.ReadFile(mediaPath)
 	if err != nil {
 		panic(fmt.Errorf("ERROR: Could open the file %s\n", err))
@@ -274,17 +325,17 @@ type SubmitMediaResponse struct {
 func ParseErrors(r *http.Response) error {
 	var content SubmitMediaResponse
 	if err := json.NewDecoder(r.Body).Decode(&content); err != nil {
-		return fmt.Errorf("ERROR: Could not decode response: %s\n", err)
+		return err
 	}
 
 	if len(content.JSON.Errors) > 0 {
-		return fmt.Errorf("ERROR: Could not submit media: %s\n", content.JSON.Errors[0][1])
+		return fmt.Errorf("%s", content.JSON.Errors)
 	}
 
 	if content.Message != "" {
-		return fmt.Errorf("ERROR: Could not submit media: %s\n", content.Message)
+		return fmt.Errorf("%s", content.Message)
 	}
 
-	fmt.Println("Response Submit Media", content.JSON.Data)
+	// fmt.Println("Response Submit Media", content.JSON.Data)
 	return nil
 }
